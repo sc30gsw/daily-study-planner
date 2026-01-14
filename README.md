@@ -1,73 +1,217 @@
-# React + TypeScript + Vite
+# Daily Study Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+毎日の学習スケジュールを視覚的に管理できるアプリです。特に英語学習（1日3時間以上）の目標達成をサポートします。
 
-Currently, two official plugins are available:
+## 🌐 アプリを使う
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**[Daily Study Planner を開く](https://sc30gsw.github.io/daily-study-planner/)**
 
-## React Compiler
+ブラウザで上のリンクをクリックするだけで、すぐに使い始められます。インストール不要です。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 📖 使い方ガイド
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 画面の見方
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+アプリを開くと、以下の要素が表示されます：
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+┌─────────────────────────────────────────────────┐
+│  Daily Study Planner          [カテゴリ管理]    │
+│  英語学習スケジュールを管理しましょう            │
+├─────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────┐    │
+│  │ 今日の英語学習  2.5h / 3h               │    │
+│  │ ████████████████░░░░░░ あと0.5時間      │    │
+│  └─────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────┤
+│        [24時間時計] [カレンダー]                 │
+├─────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────────────┐    │
+│  │              │  │ 新しい予定            │    │
+│  │   24時間     │  │ タイトル: [        ] │    │
+│  │   円形時計   │  │ 開始: [09:00]        │    │
+│  │              │  │ 終了: [10:00]        │    │
+│  │              │  │ 種類: ○予定 ○空き   │    │
+│  │              │  │ カテゴリ: [英語学習] │    │
+│  └──────────────┘  │        [追加]        │    │
+│                    ├──────────────────────┤    │
+│                    │ 予定一覧 (3)          │    │
+│                    │ ・英語リーディング    │    │
+│                    │   09:00-10:00 (1時間) │    │
+│                    │ ・リスニング練習      │    │
+│                    │   14:00-15:30 (1時間30分)│  │
+│                    └──────────────────────┘    │
+└─────────────────────────────────────────────────┘
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 機能1: 予定を追加する
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **タイトル**を入力（例：「英語リーディング」「TOEIC対策」）
+2. **開始時間**と**終了時間**を選択
+3. **種類**を選択
+   - 「予定」: 実際に行う予定
+   - 「空き時間」: 何かできる時間帯
+4. **カテゴリ**を選択（英語学習、仕事、読書など）
+5. **[追加]** ボタンをクリック
+
+### 機能2: 予定を編集・削除する
+
+- 予定一覧または時計上の予定をクリックすると編集モードになります
+- 内容を変更して **[更新]** をクリック
+- 削除したい場合は **[この予定を削除]** をクリック
+
+### 機能3: 表示を切り替える
+
+画面中央の **[24時間時計]** と **[カレンダー]** ボタンで表示を切り替えられます。
+
+| 表示モード | 特徴 |
+|-----------|------|
+| 24時間時計 | 円形の時計で1日の予定を俯瞰できます。マウスを乗せると詳細が表示されます。 |
+| カレンダー | 縦型のタイムラインで時間順に予定を確認できます。 |
+
+### 機能4: カテゴリを管理する
+
+右上の **[カテゴリ管理]** ボタンをクリックすると、カテゴリの管理画面が表示されます。
+
+**初期カテゴリ（4種類）:**
+- 🟢 英語学習
+- 🔵 仕事
+- 💜 休憩
+- ⚫ その他
+
+**カテゴリの追加:**
+1. **[+ 追加]** ボタンをクリック
+2. モーダルが開きます
+3. カテゴリ名を入力
+4. 色を選択（12色から選べます）
+5. **[追加]** をクリック
+
+**カテゴリの編集:**
+1. 編集したいカテゴリの **[編集]** をクリック
+2. モーダルで名前や色を変更
+3. **[保存]** をクリック
+
+**カテゴリの削除:**
+1. 削除したいカテゴリの **[削除]** をクリック
+2. 確認モーダルで **[削除]** をクリック
+
+### 機能5: 学習進捗を確認する
+
+画面上部の進捗バーで、今日の英語学習時間を確認できます。
+
+- **目標**: 3時間/日
+- **バーの色**:
+  - 青色 = 目標に向けて進行中
+  - 緑色 = 目標達成！
+
+---
+
+## 💡 活用のヒント
+
+### 効果的な使い方
+
+1. **朝に1日の予定を入力**
+   - まず「空き時間」として使える時間帯を登録
+   - その後、具体的な学習予定を入力
+
+2. **カテゴリを活用**
+   - 英語学習を細分化（リーディング、リスニング、スピーキングなど）
+   - 自分専用のカテゴリを作成
+
+3. **定期的に見直し**
+   - 実際の活動と照らし合わせて予定を更新
+   - 空き時間を有効活用
+
+### おすすめの追加カテゴリ例
+
+初期の4カテゴリに加えて、自分だけのカテゴリを追加できます。
+
+| カテゴリ名 | 用途 |
+|-----------|------|
+| 読書 | 本を読む時間 |
+| 運動 | ジム、ランニングなど |
+| 移動 | 通勤・通学時間 |
+| 英語リーディング | 英語の本や記事 |
+| 英語リスニング | Podcast、動画視聴 |
+| TOEIC対策 | テスト対策の勉強 |
+
+---
+
+## 📱 対応ブラウザ
+
+以下のブラウザで動作確認しています：
+
+- ✅ Google Chrome（推奨）
+- ✅ Safari
+- ✅ Firefox
+- ✅ Microsoft Edge
+
+スマートフォンやタブレットでもご利用いただけます。
+
+---
+
+## 💾 データについて
+
+- データは**お使いのブラウザに保存**されます
+- アカウント登録は不要です
+- ブラウザのデータを削除すると予定も消えますのでご注意ください
+- 別のブラウザやデバイスとは同期されません
+
+---
+
+## ❓ よくある質問
+
+### Q: データは他の人に見られますか？
+**A:** いいえ。データはあなたのブラウザ内にのみ保存され、外部に送信されることはありません。
+
+### Q: スマホでも使えますか？
+**A:** はい。ブラウザでURLを開くだけで使えます。ホーム画面に追加すると便利です。
+
+### Q: 予定が消えてしまいました
+**A:** ブラウザのキャッシュやデータをクリアすると、保存されていた予定も削除されます。重要な予定はメモしておくことをおすすめします。
+
+### Q: 目標の3時間を変更できますか？
+**A:** 現在のバージョンでは3時間固定となっています。
+
+---
+
+## 🔧 開発者向け情報
+
+<details>
+<summary>技術スタック（クリックで展開）</summary>
+
+- **フレームワーク**: React 19 + TypeScript
+- **ビルドツール**: Vite + Bun
+- **スタイリング**: Tailwind CSS v4
+- **フォーム**: TanStack Form + Valibot
+- **日付処理**: @formkit/tempo
+- **データ保存**: localStorage
+
+### ローカル開発
+
+```bash
+# 依存関係のインストール
+bun install
+
+# 開発サーバー起動
+bun run dev
+
+# ビルド
+bun run build
 ```
+
+</details>
+
+---
+
+## 📄 ライセンス
+
+MIT License
+
+---
+
+**作成者**: [@sc30gsw](https://github.com/sc30gsw)

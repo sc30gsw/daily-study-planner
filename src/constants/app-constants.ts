@@ -23,9 +23,6 @@ export const COLOR_PALETTE: string[] = [
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'english', name: '英語学習', color: '#22c55e' },
   { id: 'work', name: '仕事', color: '#3b82f6' },
-  { id: 'reading', name: '読書', color: '#8b5cf6' },
-  { id: 'exercise', name: '運動', color: '#ef4444' },
-  { id: 'commute', name: '移動', color: '#f59e0b' },
   { id: 'rest', name: '休憩', color: '#a855f7' },
   { id: 'other', name: 'その他', color: '#6b7280' },
 ];
