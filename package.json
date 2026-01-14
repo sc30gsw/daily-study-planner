@@ -1,0 +1,31 @@
+{
+  "name": "daily-study-planner",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@formkit/tempo": "^1.0.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-form": "^1.27.7",
+    "@tanstack/valibot-form-adapter": "^0.42.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.18",
+    "valibot": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "oxlint": "^1.39.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
+  }
+}
