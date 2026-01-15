@@ -10,11 +10,15 @@
     "correctness": "error"
   },
   "rules": {
-    "no-default-export": "error"
+    "no-default-export": "error",
+    "no-children-prop": "off",
+    "click-events-have-key-events": "off",
+    "no-noninteractive-element-interactions": "off",
+    "label-has-associated-control": "off"
   },
   "overrides": [
     {
-      "files": ["src/router.tsx", "vite.config.ts"],
+      "files": ["src/router.tsx", "vite.config.ts", "eslint.config.js"],
       "rules": {
         "no-default-export": "off"
       }

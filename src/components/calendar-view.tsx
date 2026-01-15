@@ -1,25 +1,30 @@
-import type { ScheduleItem, Category } from '../types/schedule';
-import { timeToMinutes } from '../utils/time-utils';
-import { HOURS_IN_DAY, MINUTES_IN_HOUR } from '../constants/app-constants';
+import type { ScheduleItem, Category } from "~/types/schedule";
+import { timeToMinutes } from "~/utils/time-utils";
+import { HOURS_IN_DAY, MINUTES_IN_HOUR } from "~/constants";
 
 interface CalendarViewProps {
   items: ScheduleItem[];
-  categories: Category[];
-  onItemClick?: (item: ScheduleItem) => void;
+  categories: readonly Category[];
+  onItemClick?: (item: ScheduleItem, position: Record<"x" | "y", number>) => void;
 }
 
 const HOUR_HEIGHT = 48; // pixels per hour
 const TOTAL_MINUTES = HOURS_IN_DAY * MINUTES_IN_HOUR;
 
-export function CalendarView({ items, categories, onItemClick }: CalendarViewProps): React.ReactNode {
-  const hours = Array.from({ length: HOURS_IN_DAY }, function createHour(_, i) { return i; });
+export function CalendarView({ items, categories, onItemClick }: CalendarViewProps) {
+  const hours = Array.from({ length: HOURS_IN_DAY }, function createHour(_, i) {
+    return i;
+  });
 
-  function getCategoryColor(categoryId: string): string {
-    const category = categories.find(function findCat(c) { return c.id === categoryId; });
-    return category?.color ?? '#6b7280';
+  function getCategoryColor(categoryId: Category["id"]) {
+    const category = categories.find(function findCat(c) {
+      return c.id === categoryId;
+    });
+
+    return category?.color ?? "#6b7280";
   }
 
-  function calculateItemPosition(item: ScheduleItem): { top: number; height: number } {
+  function calculateItemPosition(item: ScheduleItem) {
     const startMinutes = timeToMinutes(item.startTime);
     let endMinutes = timeToMinutes(item.endTime);
 
@@ -35,19 +40,15 @@ export function CalendarView({ items, categories, onItemClick }: CalendarViewPro
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="relative flex" style={{ height: HOURS_IN_DAY * HOUR_HEIGHT }}>
         {/* Time labels column */}
-        <div className="shrink-0 border-r border-gray-200 bg-gray-50 w-16">
+        <div className="w-16 shrink-0 border-r border-gray-200 bg-gray-50">
           {hours.map(function renderHourLabel(hour) {
             return (
-              <div
-                key={hour}
-                className="relative"
-                style={{ height: HOUR_HEIGHT }}
-              >
+              <div key={hour} className="relative" style={{ height: HOUR_HEIGHT }}>
                 <span className="absolute -top-2 right-2 text-xs text-gray-500">
-                  {hour.toString().padStart(2, '0')}:00
+                  {hour.toString().padStart(2, "0")}:00
                 </span>
               </div>
             );
@@ -55,7 +56,7 @@ export function CalendarView({ items, categories, onItemClick }: CalendarViewPro
         </div>
 
         {/* Schedule content area */}
-        <div className="flex-1 relative">
+        <div className="relative flex-1">
           {/* Hour grid lines */}
           {hours.map(function renderGridLine(hour) {
             return (
@@ -71,24 +72,28 @@ export function CalendarView({ items, categories, onItemClick }: CalendarViewPro
           {items.map(function renderScheduleItem(item) {
             const { top, height } = calculateItemPosition(item);
             const color = getCategoryColor(item.categoryId);
-            const opacity = item.type === 'doing' ? 1 : 0.6;
+            const opacity = item.type === "doing" ? 1 : 0.6;
 
             return (
               <div
                 key={item.id}
-                className="absolute left-1 right-1 rounded-md px-2 py-1 overflow-hidden cursor-pointer hover:brightness-90 transition-all"
+                className="absolute right-1 left-1 cursor-pointer overflow-hidden rounded-md px-2 py-1 transition-all hover:brightness-90"
                 style={{
                   top,
                   height,
                   backgroundColor: color,
                   opacity,
                 }}
-                onClick={function handleItemClick() { onItemClick?.(item); }}
+                onClick={function handleItemClick(e) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  onItemClick?.(item, {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                  });
+                }}
               >
-                <div className="text-white text-sm font-medium truncate">
-                  {item.title}
-                </div>
-                <div className="text-white text-xs opacity-80">
+                <div className="truncate text-sm font-medium text-white">{item.title}</div>
+                <div className="text-xs text-white opacity-80">
                   {item.startTime} - {item.endTime}
                 </div>
               </div>
@@ -103,18 +108,18 @@ export function CalendarView({ items, categories, onItemClick }: CalendarViewPro
   );
 }
 
-function CurrentTimeIndicator(): React.ReactNode {
-  const now = new Date();
-  const currentMinutes = now.getHours() * MINUTES_IN_HOUR + now.getMinutes();
+function CurrentTimeIndicator() {
+  const currentTime = new Date();
+  const currentMinutes = currentTime.getHours() * MINUTES_IN_HOUR + currentTime.getMinutes();
   const top = (currentMinutes / MINUTES_IN_HOUR) * HOUR_HEIGHT;
 
   return (
     <div
-      className="absolute left-0 right-0 flex items-center pointer-events-none z-10"
+      className="pointer-events-none absolute right-0 left-0 z-10 flex items-center"
       style={{ top }}
     >
-      <div className="w-2 h-2 bg-red-500 rounded-full" />
-      <div className="flex-1 h-0.5 bg-red-500" />
+      <div className="h-2 w-2 rounded-full bg-red-500" />
+      <div className="h-0.5 flex-1 bg-red-500" />
     </div>
   );
 }

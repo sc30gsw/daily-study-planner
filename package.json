@@ -1,20 +1,26 @@
 {
   "name": "daily-study-planner",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "lefthook install",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
+    "check": "oxlint --type-aware --type-check && oxfmt --check",
+    "fix": "oxlint --type-aware --fix && oxfmt",
+    "lint": "oxlint --type-aware --type-check",
+    "lint:fix": "oxlint --type-aware --fix",
+    "fmt": "oxfmt --check",
+    "fmt:fix": "oxfmt",
     "preview": "vite preview"
   },
   "dependencies": {
     "@formkit/tempo": "^1.0.0",
+    "@tabler/icons-react": "^3.36.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-form": "^1.27.7",
-    "@tanstack/valibot-form-adapter": "^0.42.1",
+    "better-result": "^1.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.18",
@@ -24,8 +30,12 @@
     "@types/node": "^25.0.8",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
+    "@typescript/native-preview": "^7.0.0-dev.20260114.1",
     "@vitejs/plugin-react": "^5.1.1",
+    "lefthook": "^2.0.15",
+    "oxfmt": "^0.24.0",
     "oxlint": "^1.39.0",
+    "oxlint-tsgolint": "^0.11.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4"
   }

@@ -1,4 +1,6 @@
-export type ScheduleType = 'doing' | 'available';
+export type ScheduleType = "doing" | "available";
+
+export type TimeString = `${string}:${string}`;
 
 export interface Category {
   id: string;
@@ -9,13 +11,13 @@ export interface Category {
 export interface ScheduleItem {
   id: string;
   title: string;
-  startTime: string; // "HH:mm" format
-  endTime: string;   // "HH:mm" format
+  startTime: TimeString;
+  endTime: TimeString;
   type: ScheduleType;
-  categoryId: string;
+  categoryId: Category["id"];
 }
 
-export type ViewMode = 'clock' | 'calendar';
+export type ViewMode = "clock" | "calendar";
 
 export interface AppState {
   scheduleItems: ScheduleItem[];

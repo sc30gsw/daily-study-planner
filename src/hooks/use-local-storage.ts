@@ -1,23 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import { Result } from "better-result";
 
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
+export function useLocalStorage<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
-    try {
+    const result = Result.try(() => {
       const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
-    } catch (error) {
-      console.error('Error reading from localStorage:', error);
+
+      if (item) {
+        return JSON.parse(item) as T;
+      }
+
       return initialValue;
-    }
+    });
+
+    return result.match({
+      ok: (value) => value,
+      err: (error) => {
+        console.error("Error reading from localStorage:", error);
+
+        return initialValue;
+      },
+    });
   });
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(storedValue));
-    } catch (error) {
-      console.error('Error writing to localStorage:', error);
-    }
-  }, [key, storedValue]);
+  useEffect(
+    function syncToLocalStorage() {
+      const result = Result.try(() => {
+        window.localStorage.setItem(key, JSON.stringify(storedValue));
+      });
 
-  return [storedValue, setStoredValue];
+      if (Result.isError(result)) {
+        console.error("Error writing to localStorage:", result.error);
+      }
+    },
+    [key, storedValue],
+  );
+
+  return [storedValue, setStoredValue] as const;
 }
