@@ -1,14 +1,12 @@
 import type { ScheduleItem, Category } from "~/types/schedule";
 import { timeToMinutes } from "~/utils/time-utils";
-import { HOURS_IN_DAY, MINUTES_IN_HOUR } from "~/constants";
+import { HOURS_IN_DAY, MINUTES_IN_HOUR, HOUR_HEIGHT_CALENDAR } from "~/constants";
 
 interface CalendarViewProps {
   items: ScheduleItem[];
   categories: readonly Category[];
   onItemClick?: (item: ScheduleItem, position: Record<"x" | "y", number>) => void;
 }
-
-const HOUR_HEIGHT = 48; // pixels per hour
 const TOTAL_MINUTES = HOURS_IN_DAY * MINUTES_IN_HOUR;
 
 export function CalendarView({ items, categories, onItemClick }: CalendarViewProps) {
@@ -33,20 +31,20 @@ export function CalendarView({ items, categories, onItemClick }: CalendarViewPro
       endMinutes += TOTAL_MINUTES;
     }
 
-    const top = (startMinutes / MINUTES_IN_HOUR) * HOUR_HEIGHT;
-    const height = ((endMinutes - startMinutes) / MINUTES_IN_HOUR) * HOUR_HEIGHT;
+    const top = (startMinutes / MINUTES_IN_HOUR) * HOUR_HEIGHT_CALENDAR;
+    const height = ((endMinutes - startMinutes) / MINUTES_IN_HOUR) * HOUR_HEIGHT_CALENDAR;
 
     return { top, height: Math.max(height, 24) };
   }
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="relative flex" style={{ height: HOURS_IN_DAY * HOUR_HEIGHT }}>
+      <div className="relative flex" style={{ height: HOURS_IN_DAY * HOUR_HEIGHT_CALENDAR }}>
         {/* Time labels column */}
         <div className="w-16 shrink-0 border-r border-gray-200 bg-gray-50">
           {hours.map(function renderHourLabel(hour) {
             return (
-              <div key={hour} className="relative" style={{ height: HOUR_HEIGHT }}>
+              <div key={hour} className="relative" style={{ height: HOUR_HEIGHT_CALENDAR }}>
                 <span className="absolute -top-2 right-2 text-xs text-gray-500">
                   {hour.toString().padStart(2, "0")}:00
                 </span>
@@ -63,7 +61,7 @@ export function CalendarView({ items, categories, onItemClick }: CalendarViewPro
               <div
                 key={hour}
                 className="absolute w-full border-t border-gray-100"
-                style={{ top: hour * HOUR_HEIGHT }}
+                style={{ top: hour * HOUR_HEIGHT_CALENDAR }}
               />
             );
           })}
@@ -111,7 +109,7 @@ export function CalendarView({ items, categories, onItemClick }: CalendarViewPro
 function CurrentTimeIndicator() {
   const currentTime = new Date();
   const currentMinutes = currentTime.getHours() * MINUTES_IN_HOUR + currentTime.getMinutes();
-  const top = (currentMinutes / MINUTES_IN_HOUR) * HOUR_HEIGHT;
+  const top = (currentMinutes / MINUTES_IN_HOUR) * HOUR_HEIGHT_CALENDAR;
 
   return (
     <div

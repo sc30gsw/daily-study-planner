@@ -2,7 +2,8 @@ import { useRef, useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import * as v from "valibot";
 import type { ScheduleItem, ScheduleType, Category, TimeString } from "~/types/schedule";
-import { COLOR_PALETTE } from "~/constants";
+import { COLOR_PALETTE, HOUR_HEIGHT_CALENDAR, MINUTES_IN_HOUR } from "~/constants";
+import { timeToMinutes } from "~/utils/time-utils";
 
 const scheduleModalSchema = v.object({
   title: v.pipe(v.string(), v.trim(), v.minLength(1, "タイトルを入力してください")),
@@ -97,10 +98,10 @@ export function useScheduleModal({
       const relativeX = position.x - containerRect.left;
       const relativeY = position.y - containerRect.top;
 
-      const popoverWidth = 384; // max-w-sm (384px)
+      const popoverWidthLarge = 384; // max-w-sm (384px)
+      const popoverWidthSmall = 256; // w-64 (256px) for compact card
       const estimatedPopoverHeight = 500;
       const padding = 16;
-      const CLOCK_SIZE = 300; // Clock view size
 
       // Get actual popover height if available, otherwise use estimate
       const popoverHeight = popoverRef.current.offsetHeight || estimatedPopoverHeight;
@@ -109,53 +110,18 @@ export function useScheduleModal({
       const containerWidth = containerRect.width;
       const containerHeight = containerRect.height;
 
+      // Use window width for breakpoint check
+      const windowWidth = window.innerWidth;
+      const isSmallScreen = windowWidth < 1024; // lg breakpoint
+      const popoverWidth = isSmallScreen ? popoverWidthSmall : popoverWidthLarge;
+
       let left = relativeX - popoverWidth / 2;
       let top = relativeY + 20;
 
-      // For clock view, position popover based on screen size
       if (currentView === "clock") {
-        const headerHeight = 60;
-        const clockTop = headerHeight + padding;
-        const clockCenterY = clockTop + CLOCK_SIZE / 2;
-        const clockRadius = CLOCK_SIZE / 2;
-        const clockCenterX = containerWidth / 2;
-        const clockLeftEdge = clockCenterX - clockRadius;
-        const clockRightEdge = clockCenterX + clockRadius;
-        const gap = 8; // Small gap between clock and popover
-
-        // Use window width for breakpoint check
-        const windowWidth = window.innerWidth;
-        const isLargeScreen = windowWidth >= 1024; // lg breakpoint
-
-        if (isLargeScreen) {
-          // Large screen: position to the LEFT of clock
-          left = clockLeftEdge - popoverWidth - gap;
-
-          // If it goes off screen, allow some overlap with clock
-          if (left < padding) {
-            left = padding;
-          }
-        } else {
-          // Small screen: position to the RIGHT of clock
-          left = clockRightEdge + gap;
-
-          // If it goes off screen, push left but prevent horizontal scroll
-          if (left + popoverWidth > containerWidth - padding) {
-            left = containerWidth - popoverWidth - padding;
-          }
-
-          // Ensure minimum left position
-          if (left < padding) {
-            left = padding;
-          }
-        }
-
-        // Center vertically with clock
-        top = Math.max(padding, clockCenterY - popoverHeight / 2);
-      } else {
-        // For calendar view, use normal positioning
-        left = relativeX - popoverWidth / 2;
+        // Clock view: position below the clicked item
         top = relativeY + 20;
+        left = relativeX - popoverWidth / 2;
 
         // Adjust horizontal position to fit within container
         if (left + popoverWidth > containerWidth - padding) {
@@ -165,22 +131,53 @@ export function useScheduleModal({
         if (left < padding) {
           left = padding;
         }
-      }
 
-      // Adjust vertical position - ensure popover fits within container
-      if (top + popoverHeight > containerHeight - padding) {
-        // Try to show above the click position
-        const topAbove = relativeY - popoverHeight - 20;
-        if (topAbove >= padding) {
-          top = topAbove;
+        // Adjust vertical position if it goes below container
+        if (top + popoverHeight > containerHeight - padding) {
+          // Try to show above the click position
+          const topAbove = relativeY - popoverHeight - 20;
+
+          if (topAbove >= padding) {
+            top = topAbove;
+          } else {
+            // Position at top of container
+            top = padding;
+          }
+        }
+      } else {
+        // Calendar view: position on the right side, fixed at start time position
+        // Calculate top based on item's startTime (not click position)
+        const headerOffset = 60; // Approximate header height including title and padding
+        const timeLabelsWidth = 64; // w-16 = 64px
+
+        if (item) {
+          // Calculate position from start time
+          const startMinutes = timeToMinutes(item.startTime);
+          top = headerOffset + (startMinutes / MINUTES_IN_HOUR) * HOUR_HEIGHT_CALENDAR;
         } else {
-          // If it doesn't fit above, position at the top of container
-          top = padding;
+          top = relativeY;
+        }
+
+        // Position to the right of the calendar area
+        left = containerWidth - popoverWidth - padding;
+
+        // Ensure minimum left position
+        if (left < timeLabelsWidth + padding) {
+          left = timeLabelsWidth + padding;
         }
       }
 
+      // Final vertical bounds check
       if (top < padding) {
         top = padding;
+      }
+
+      if (top + popoverHeight > containerHeight - padding) {
+        top = containerHeight - popoverHeight - padding;
+
+        if (top < padding) {
+          top = padding;
+        }
       }
 
       setPopoverPosition({ top, left });
@@ -195,7 +192,7 @@ export function useScheduleModal({
     }, 0);
 
     return () => clearTimeout(timeoutId);
-  }, [isOpen, position, containerRef, currentView]);
+  }, [isOpen, position, containerRef, currentView, item]);
 
   useEffect(() => {
     function handleClickOutsideEvent(e: MouseEvent) {
