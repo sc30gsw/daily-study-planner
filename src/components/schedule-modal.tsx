@@ -1,5 +1,5 @@
 import type { AnyFieldApi } from "@tanstack/react-form";
-import { IconX } from "@tabler/icons-react";
+import { IconX, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import type { ScheduleItem, ScheduleType, Category } from "~/types/schedule";
 import { TYPE_LABELS } from "~/constants";
 import { formatDuration } from "~/utils/time-utils";
@@ -22,6 +22,8 @@ interface ScheduleModalProps {
   categories: readonly Category[];
   isOpen: boolean;
   position?: { x: number; y: number };
+  containerRef?: React.RefObject<HTMLDivElement | null>;
+  currentView?: "clock" | "calendar";
   onClose: () => void;
   onSave: (itemData: Omit<ScheduleItem, "id">) => void;
   onDelete: () => void;
@@ -32,6 +34,8 @@ export function ScheduleModal({
   categories,
   isOpen,
   position,
+  containerRef,
+  currentView,
   onClose,
   onSave,
   onDelete,
@@ -41,6 +45,8 @@ export function ScheduleModal({
     categories,
     isOpen,
     position,
+    containerRef,
+    currentView,
     onClose,
     onSave,
   });
@@ -50,64 +56,83 @@ export function ScheduleModal({
   }
 
   return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      {/* Popover */}
-      <div
-        ref={popoverRef}
-        className="fixed z-50 w-full max-w-lg rounded-lg border border-gray-200 bg-white shadow-xl"
-        style={{
-          top: `${popoverPosition.top}px`,
-          left: `${popoverPosition.left}px`,
+    <div
+      ref={popoverRef}
+      className="absolute z-50 w-full max-w-sm rounded-lg border border-gray-200 bg-white shadow-xl"
+      style={{
+        top: `${popoverPosition.top}px`,
+        left: `${popoverPosition.left}px`,
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.handleSubmit();
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-        >
-          <div className="relative">
-            {/* Header with color bar */}
+        <div className="relative">
+          {/* Header with color bar */}
+          <form.Field
+            name="categoryId"
+            children={(field) => (
+              <div
+                className="h-2 rounded-t-lg"
+                style={{ backgroundColor: getCategoryColor(field.state.value) }}
+              />
+            )}
+          />
+
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          >
+            <IconX size={20} />
+          </button>
+
+          {/* Content */}
+          <div className="p-6 pt-4">
+            {/* Title */}
             <form.Field
-              name="categoryId"
+              name="title"
               children={(field) => (
-                <div
-                  className="h-2 rounded-t-lg"
-                  style={{ backgroundColor: getCategoryColor(field.state.value) }}
-                />
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="タイトルを追加"
+                    className={`w-full border-b-2 bg-transparent pb-2 text-xl font-semibold text-gray-800 transition-colors placeholder:text-gray-400 focus:outline-none ${
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                        ? "border-red-500"
+                        : "border-transparent focus:border-blue-500"
+                    }`}
+                  />
+                  <FieldInfo field={field} />
+                </div>
               )}
             />
 
-            {/* Close button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-4 right-4 rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-            >
-              <IconX size={20} />
-            </button>
-
-            {/* Content */}
-            <div className="p-6 pt-4">
-              {/* Title */}
+            {/* Time */}
+            <div className="mb-4 grid grid-cols-2 gap-4">
               <form.Field
-                name="title"
+                name="startTime"
                 children={(field) => (
-                  <div className="mb-4">
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-600">開始</label>
                     <input
-                      type="text"
+                      type="time"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="タイトルを追加"
-                      className={`w-full border-b-2 bg-transparent pb-2 text-xl font-semibold text-gray-800 transition-colors placeholder:text-gray-400 focus:outline-none ${
+                      className={`w-full rounded-md border bg-white px-3 py-2 text-gray-900 [color-scheme:light] focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                         field.state.meta.isTouched && !field.state.meta.isValid
                           ? "border-red-500"
-                          : "border-transparent focus:border-blue-500"
+                          : "border-gray-300"
                       }`}
                     />
                     <FieldInfo field={field} />
@@ -115,156 +140,134 @@ export function ScheduleModal({
                 )}
               />
 
-              {/* Time */}
-              <div className="mb-4 flex items-center gap-4">
-                <form.Field
-                  name="startTime"
-                  children={(field) => (
-                    <div className="flex-1">
-                      <label className="mb-1 block text-sm text-gray-600">開始</label>
-                      <input
-                        type="time"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        className={`w-full rounded-md border bg-white px-3 py-2 text-gray-900 [color-scheme:light] focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                          field.state.meta.isTouched && !field.state.meta.isValid
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      <FieldInfo field={field} />
-                    </div>
-                  )}
-                />
-
-                <form.Field
-                  name="endTime"
-                  children={(field) => (
-                    <div className="flex-1">
-                      <label className="mb-1 block text-sm text-gray-600">終了</label>
-                      <input
-                        type="time"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        className={`w-full rounded-md border bg-white px-3 py-2 text-gray-900 [color-scheme:light] focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                          field.state.meta.isTouched && !field.state.meta.isValid
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      <FieldInfo field={field} />
-                    </div>
-                  )}
-                />
-              </div>
-
-              {/* Duration display */}
-              <form.Subscribe
-                selector={(state) => [state.values.startTime, state.values.endTime]}
-                children={([startTime, endTime]) => (
-                  <div className="mb-4 text-sm text-gray-600">
-                    所要時間:{" "}
-                    <span className="font-medium text-blue-600">
-                      {formatDuration(startTime, endTime)}
-                    </span>
-                  </div>
-                )}
-              />
-
-              {/* Type */}
               <form.Field
-                name="type"
+                name="endTime"
                 children={(field) => (
-                  <div className="mb-4">
-                    <label className="mb-2 block text-sm text-gray-600">種類</label>
-                    <div className="flex gap-4">
-                      {(Object.entries(TYPE_LABELS) as [ScheduleType, string][]).map(
-                        function renderOption([value, label]) {
-                          return (
-                            <label key={value} className="flex cursor-pointer items-center gap-2">
-                              <input
-                                type="radio"
-                                name="type"
-                                value={value}
-                                checked={field.state.value === value}
-                                onChange={function handleChange() {
-                                  field.handleChange(value as ScheduleType);
-                                }}
-                                className="h-4 w-4 border-gray-300 bg-white text-blue-600 focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-700">{label}</span>
-                            </label>
-                          );
-                        },
-                      )}
-                    </div>
-                  </div>
-                )}
-              />
-
-              {/* Category */}
-              <form.Field
-                name="categoryId"
-                children={(field) => (
-                  <div className="mb-6">
-                    <label className="mb-2 block text-sm text-gray-600">カテゴリ</label>
-                    <div className="flex flex-wrap gap-2">
-                      {categories.map(function renderCategory(category) {
-                        const isSelected = field.state.value === category.id;
-                        return (
-                          <button
-                            key={category.id}
-                            type="button"
-                            onClick={function handleClick() {
-                              field.handleChange(category.id);
-                            }}
-                            className={`flex items-center gap-2 rounded-full border-2 px-3 py-1.5 transition-all ${
-                              isSelected
-                                ? "border-gray-800 bg-gray-100"
-                                : "border-transparent bg-gray-50 hover:bg-gray-100"
-                            }`}
-                          >
-                            <div
-                              className="h-3 w-3 rounded-full"
-                              style={{ backgroundColor: category.color }}
-                            />
-                            <span className="text-sm text-gray-700">{category.name}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              />
-
-              {/* Actions */}
-              <form.Subscribe
-                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                children={([canSubmit, isSubmitting]) => (
-                  <div className="flex gap-2 border-t border-gray-200 pt-2">
-                    <button
-                      type="submit"
-                      disabled={!canSubmit}
-                      className="flex-1 rounded-md bg-blue-500 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-gray-300"
-                    >
-                      {isSubmitting ? "保存中..." : "保存"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onDelete}
-                      className="rounded-md border border-red-300 bg-white px-4 py-2 font-medium text-red-600 transition-colors hover:bg-red-50"
-                    >
-                      削除
-                    </button>
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-600">終了</label>
+                    <input
+                      type="time"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className={`w-full rounded-md border bg-white px-3 py-2 text-gray-900 [color-scheme:light] focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        field.state.meta.isTouched && !field.state.meta.isValid
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    <FieldInfo field={field} />
                   </div>
                 )}
               />
             </div>
+
+            {/* Duration display */}
+            <form.Subscribe
+              selector={(state) => [state.values.startTime, state.values.endTime]}
+              children={([startTime, endTime]) => (
+                <div className="mb-4 text-sm text-gray-600">
+                  所要時間:{" "}
+                  <span className="font-medium text-blue-600">
+                    {formatDuration(startTime, endTime)}
+                  </span>
+                </div>
+              )}
+            />
+
+            {/* Type */}
+            <form.Field
+              name="type"
+              children={(field) => (
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm text-gray-600">種類</label>
+                  <div className="flex gap-4">
+                    {(Object.entries(TYPE_LABELS) as [ScheduleType, string][]).map(
+                      function renderOption([value, label]) {
+                        return (
+                          <label key={value} className="flex cursor-pointer items-center gap-2">
+                            <input
+                              type="radio"
+                              name="type"
+                              value={value}
+                              checked={field.state.value === value}
+                              onChange={function handleChange() {
+                                field.handleChange(value as ScheduleType);
+                              }}
+                              className="h-4 w-4 border-gray-300 bg-white text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">{label}</span>
+                          </label>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+              )}
+            />
+
+            {/* Category */}
+            <form.Field
+              name="categoryId"
+              children={(field) => (
+                <div className="mb-6">
+                  <label className="mb-2 block text-sm text-gray-600">カテゴリ</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {categories.map(function renderCategory(category) {
+                      const isSelected = field.state.value === category.id;
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={function handleClick() {
+                            field.handleChange(category.id);
+                          }}
+                          className={`flex items-center justify-center gap-1.5 rounded-full border-2 px-2 py-1.5 transition-all ${
+                            isSelected
+                              ? "border-gray-800 bg-gray-100"
+                              : "border-transparent bg-gray-50 hover:bg-gray-100"
+                          }`}
+                        >
+                          <div
+                            className="h-3 w-3 shrink-0 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="truncate text-xs text-gray-700">{category.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            />
+
+            {/* Actions */}
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+              children={([canSubmit, isSubmitting]) => (
+                <div className="grid grid-cols-1 gap-2 border-t border-gray-200 pt-2">
+                  <button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-500 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  >
+                    <IconDeviceFloppy size={18} />
+                    {isSubmitting ? "更新中..." : "更新"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onDelete}
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-red-300 bg-white px-4 py-2 font-medium text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <IconTrash size={18} />
+                    削除
+                  </button>
+                </div>
+              )}
+            />
           </div>
-        </form>
-      </div>
-    </>
+        </div>
+      </form>
+    </div>
   );
 }

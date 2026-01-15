@@ -23,6 +23,8 @@ interface UseScheduleModalProps {
   categories: readonly Category[];
   isOpen: boolean;
   position?: { x: number; y: number };
+  containerRef?: React.RefObject<HTMLDivElement | null>;
+  currentView?: "clock" | "calendar";
   onClose: () => void;
   onSave: (itemData: Omit<ScheduleItem, "id">) => void;
 }
@@ -32,6 +34,8 @@ export function useScheduleModal({
   categories,
   isOpen,
   position,
+  containerRef,
+  currentView,
   onClose,
   onSave,
 }: UseScheduleModalProps) {
@@ -77,67 +81,121 @@ export function useScheduleModal({
   }, [item, form]);
 
   useEffect(() => {
-    if (!isOpen || !position) {
+    if (!isOpen || !position || !containerRef?.current) {
       return;
     }
 
-    const popoverWidth = 400;
-    const popoverHeight = 500;
-    const padding = 16;
+    function calculatePosition() {
+      if (!popoverRef.current || !position || !containerRef?.current) {
+        return;
+      }
 
-    let left = position.x - popoverWidth / 2;
-    let top = position.y + 20;
+      const container = containerRef.current;
+      const containerRect = container.getBoundingClientRect();
 
-    if (left + popoverWidth > window.innerWidth - padding) {
-      left = window.innerWidth - popoverWidth - padding;
+      // Convert screen coordinates to container-relative coordinates
+      const relativeX = position.x - containerRect.left;
+      const relativeY = position.y - containerRect.top;
+
+      const popoverWidth = 384; // max-w-sm (384px)
+      const estimatedPopoverHeight = 500;
+      const padding = 16;
+      const CLOCK_SIZE = 300; // Clock view size
+
+      // Get actual popover height if available, otherwise use estimate
+      const popoverHeight = popoverRef.current.offsetHeight || estimatedPopoverHeight;
+
+      // Get container dimensions
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+
+      let left = relativeX - popoverWidth / 2;
+      let top = relativeY + 20;
+
+      // For clock view, position popover based on screen size
+      if (currentView === "clock") {
+        const headerHeight = 60;
+        const clockTop = headerHeight + padding;
+        const clockCenterY = clockTop + CLOCK_SIZE / 2;
+        const clockRadius = CLOCK_SIZE / 2;
+        const clockCenterX = containerWidth / 2;
+        const clockLeftEdge = clockCenterX - clockRadius;
+        const clockRightEdge = clockCenterX + clockRadius;
+        const gap = 8; // Small gap between clock and popover
+
+        // Use window width for breakpoint check
+        const windowWidth = window.innerWidth;
+        const isLargeScreen = windowWidth >= 1024; // lg breakpoint
+
+        if (isLargeScreen) {
+          // Large screen: position to the LEFT of clock
+          left = clockLeftEdge - popoverWidth - gap;
+
+          // If it goes off screen, allow some overlap with clock
+          if (left < padding) {
+            left = padding;
+          }
+        } else {
+          // Small screen: position to the RIGHT of clock
+          left = clockRightEdge + gap;
+
+          // If it goes off screen, push left but prevent horizontal scroll
+          if (left + popoverWidth > containerWidth - padding) {
+            left = containerWidth - popoverWidth - padding;
+          }
+
+          // Ensure minimum left position
+          if (left < padding) {
+            left = padding;
+          }
+        }
+
+        // Center vertically with clock
+        top = Math.max(padding, clockCenterY - popoverHeight / 2);
+      } else {
+        // For calendar view, use normal positioning
+        left = relativeX - popoverWidth / 2;
+        top = relativeY + 20;
+
+        // Adjust horizontal position to fit within container
+        if (left + popoverWidth > containerWidth - padding) {
+          left = containerWidth - popoverWidth - padding;
+        }
+
+        if (left < padding) {
+          left = padding;
+        }
+      }
+
+      // Adjust vertical position - ensure popover fits within container
+      if (top + popoverHeight > containerHeight - padding) {
+        // Try to show above the click position
+        const topAbove = relativeY - popoverHeight - 20;
+        if (topAbove >= padding) {
+          top = topAbove;
+        } else {
+          // If it doesn't fit above, position at the top of container
+          top = padding;
+        }
+      }
+
+      if (top < padding) {
+        top = padding;
+      }
+
+      setPopoverPosition({ top, left });
     }
 
-    if (left < padding) {
-      left = padding;
-    }
+    // Initial calculation with estimated height
+    calculatePosition();
 
-    if (top + popoverHeight > window.innerHeight - padding) {
-      top = position.y - popoverHeight - 20;
-    }
+    // Recalculate after layout to get accurate height
+    const timeoutId = setTimeout(() => {
+      calculatePosition();
+    }, 0);
 
-    if (top < padding) {
-      top = padding;
-    }
-
-    setPopoverPosition({ top, left });
-  }, [isOpen, position]);
-
-  useEffect(() => {
-    if (!isOpen || !position || !popoverRef.current) {
-      return;
-    }
-
-    const popover = popoverRef.current;
-    const popoverWidth = 400;
-    const popoverHeight = popover.offsetHeight;
-    const padding = 16;
-
-    let left = position.x - popoverWidth / 2;
-    let top = position.y + 20;
-
-    if (left + popoverWidth > window.innerWidth - padding) {
-      left = window.innerWidth - popoverWidth - padding;
-    }
-
-    if (left < padding) {
-      left = padding;
-    }
-
-    if (top + popoverHeight > window.innerHeight - padding) {
-      top = position.y - popoverHeight - 20;
-    }
-
-    if (top < padding) {
-      top = padding;
-    }
-
-    setPopoverPosition({ top, left });
-  }, [isOpen, position]);
+    return () => clearTimeout(timeoutId);
+  }, [isOpen, position, containerRef, currentView]);
 
   useEffect(() => {
     function handleClickOutsideEvent(e: MouseEvent) {

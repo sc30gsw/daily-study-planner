@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { ViewMode, ScheduleItem } from "~/types/schedule";
 import { useSchedule } from "~/hooks/use-schedule";
 import { useCategories } from "~/hooks/use-categories";
@@ -19,6 +19,7 @@ export function App() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const scheduleViewContainerRef = useRef<HTMLDivElement | null>(null);
   const { items, addItem, updateItem, deleteItem } = useSchedule();
   const { categories, addCategory, updateCategory, deleteCategory, getCategoryById } =
     useCategories();
@@ -102,7 +103,10 @@ export function App() {
         {/* Main Content */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Schedule View */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div
+            ref={scheduleViewContainerRef}
+            className="relative rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+          >
             <h2 className="mb-4 text-lg font-semibold text-gray-800">
               {currentView === "clock" ? "24時間時計" : "カレンダー"}
             </h2>
@@ -113,6 +117,18 @@ export function App() {
                 <CalendarView items={items} categories={categories} onItemClick={handleItemClick} />
               )}
             </div>
+            {/* Schedule Edit Panel - Absolute positioned outside scroll container */}
+            <ScheduleModal
+              item={selectedItem}
+              categories={categories}
+              isOpen={isModalOpen}
+              position={clickPosition}
+              containerRef={scheduleViewContainerRef}
+              currentView={currentView}
+              onClose={handleModalClose}
+              onSave={handleModalSave}
+              onDelete={handleModalDelete}
+            />
           </div>
 
           {/* Schedule Form & Item List */}
@@ -181,17 +197,6 @@ export function App() {
           </div>
         </div>
       </div>
-
-      {/* Schedule Edit Popover */}
-      <ScheduleModal
-        item={selectedItem}
-        categories={categories}
-        isOpen={isModalOpen}
-        position={clickPosition}
-        onClose={handleModalClose}
-        onSave={handleModalSave}
-        onDelete={handleModalDelete}
-      />
     </div>
   );
 }
